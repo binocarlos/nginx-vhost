@@ -48,7 +48,7 @@ $ sudo nginx-vhost adduser git
 
 this command must be run as root
 
-## domains <id> [<domains>]
+### domains <id> <domains>
 
 set the domains for a given app id
 
@@ -56,7 +56,7 @@ set the domains for a given app id
 $ nginx-vhost domains myapp myapp.com *.myapp.com
 ```
 
-## backends <id> [<routes>]
+### backends <id> [<routes>]
 
 set the backend routes for a given app id
 
@@ -64,7 +64,7 @@ set the backend routes for a given app id
 $ nginx-vhost backends myapp 127.0.0.1:7463 127.0.0.1:7464
 ```
 
-## document_root <id> <document_root>
+### document_root <id> <document_root>
 
 for static websites set the document_root for a given app id
 
@@ -72,7 +72,7 @@ for static websites set the document_root for a given app id
 $ nginx-vhost document_root myapp /srv/projects/myapp/www
 ```
 
-## remove <id>
+### remove <id>
 
 remove a given app id
 
@@ -80,7 +80,7 @@ remove a given app id
 $ nginx-vhost remove myapp
 ```
 
-## apply
+### apply
 
 writes out the nginx config files and restarts the server
 
