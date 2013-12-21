@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+set -eo pipefail
+export VHOST_ROOT=${VHOST_ROOT:="/home/nginxvhost"}
+
+# get the config for a website with document root
+function static_website(){
+  APPNAME=$1
+  DOMAINS=$2
+  DOCUMENT_ROOT=$3
+
+  cat<<EOF > $VHOST_ROOT/conf/$APPNAME.conf
+server {
+  listen      80;
+  server_name $DOMAINS;
+  location    / {
+    alias $DOCUMENT_ROOT;
+  }
+}
+EOF
+}
+
+function proxy_website(){
+  APPNAME=$1
+  DOMAINS=$2
+  BACKENDS=$3
+
+  BACKEND_LIST=""
+
+  for BACKEND in $BACKENDS
+  do
+    BACKEND_LIST+=" server $BACKEND;
+"
+  done
+
+  cat<<EOF > $VHOST_ROOT/conf/$APPNAME.conf
+upstream $APPNAME { 
+$BACKEND_LIST
+}
+
+server {
+  listen      80;
+  server_name $DOMAINS;
+  location    / {
+    proxy_pass  http://$APPNAME;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host \$http_host;
+    proxy_set_header X-Forwarded-For \$remote_addr;
+  }
+}
+EOF
+}
+
+case "$1" in
+
+  adduser)
+    USER="$2";
+    if [ "$(id -u)" != "0" ]; then
+       echo "This script must be run as root" 1>&2
+       exit 1
+    fi
+    if [ -z $USER ]; then
+      echo "usage: nginx-vhost adduser <username>";
+      exit 1
+    fi;
+    usermod -aG nginxvhost $USER
+    ;;
+
+  domains)
+    APP=$2
+    shift
+    shift
+    DOMAINS=$*
+    mkdir -p $VHOST_ROOT/db/$APP
+    echo $DOMAINS > $VHOST_ROOT/db/$APP/domains
+    ;;
+
+  backends)
+    APP=$2
+    shift
+    shift
+    BACKENDS=$*
+    mkdir -p $VHOST_ROOT/db/$APP
+    echo $BACKENDS > $VHOST_ROOT/db/$APP/backends
+    ;;
+
+  document_root)
+    APP=$2
+    DOCUMENT_ROOT=$3
+    mkdir -p $VHOST_ROOT/db/$APP
+    echo $DOCUMENT_ROOT > $VHOST_ROOT/db/$APP/document_root
+    ;;
+
+  remove)
+    APP=$2
+    rm -rf $VHOST_ROOT/db/$APP
+    ;;
+
+  apply)
+    rm -rf $VHOST_ROOT/conf
+    mkdir -p $VHOST_ROOT/conf
+    for i in $VHOST_ROOT/db/* ; do
+      if [ -d "$i" ]; then
+        APPNAME=$(echo $i | awk -F/ '{print $(NF)}')
+        APP_ROOT=$i
+
+        if [ -e "$APP_ROOT/domains" ]; then
+          DOMAINS=$(cat $APP_ROOT/domains | tr -d \n)
+        fi
+
+        if [ -e "$APP_ROOT/backends" ]; then
+          BACKENDS=$(cat $APP_ROOT/backends | tr -d \n)
+        fi
+
+        if [ -e "$APP_ROOT/document_root" ]; then
+          DOCUMENT_ROOT=$(cat $APP_ROOT/document_root | tr -d \n)
+        fi
+
+        if [ -z $DOCUMENT_ROOT ]; then
+          proxy_website $APPNAME "$DOMAINS" "$BACKENDS"
+        else
+          static_website $APPNAME "$DOMAINS" $DOCUMENT_ROOT
+        fi
+      fi
+    done
+    /etc/init.d/nginx reload
+    ;;
+
+  help)
+    cat<<EOF | sort
+    help            Print the list of commands
+    adduser         Add a given user to nginx-vhost sudoers
+    domains         Set the domains for an app
+    backends        Set the backends for an app
+    document_root   Set the document_root for a static app
+    remove          Remove an app
+    apply           Write configs and restart nginx
+EOF
+    ;;
+
+  *)
+    nginx-vhost help
+    ;;
+
+esac
