@@ -6,12 +6,12 @@ VHOST_ROOT ?= /home/nginxvhost
 all:
 	# Type "make install" to install.
 
-install: dependencies folders copyfiles
+install: dependencies copyfiles folders
 
 dependencies: nginx
 
 folders:
-	useradd -b ${VHOST_ROOT} -s /bin/bash -g nginxvhost nginxvhost
+	useradd -b ${VHOST_ROOT} -s /bin/bash -U nginxvhost
 	mkdir -p ${VHOST_ROOT}
 	mkdir -p ${VHOST_ROOT}/conf
 	mkdir -p ${VHOST_ROOT}/db
