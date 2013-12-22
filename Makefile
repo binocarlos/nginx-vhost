@@ -6,7 +6,7 @@ VHOST_ROOT ?= /home/nginxvhost
 all:
 	# Type "make install" to install.
 
-install: dependencies copyfiles
+install: dependencies folders copyfiles
 
 dependencies: nginx
 
@@ -20,7 +20,7 @@ folders:
 	chmod -R g+w ${VHOST_ROOT}/conf
 	chmod -R g+w ${VHOST_ROOT}/db
 
-copyfiles:	
+copyfiles:
 	cp nginx-vhost /usr/local/bin/nginx-vhost
 
 nginx:	
