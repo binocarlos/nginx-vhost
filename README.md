@@ -3,25 +3,25 @@ nginx-vhost
 
 ![Build status](https://api.travis-ci.org/binocarlos/nginx-vhost.png)
 
-A bash script to manage nginx virtual hosts and routes to backend HTTP servers.
-
-This is useful when you the following network:
+A bash script wrapper for nginx that makes it easy load balance HTTP to multiple backend app servers.
 
 ```
-				INTERNET
-						|
-						|
-				PUBLIC_IP:80 (nginx)
-				/   |   \
-			 /    |    \
-		www1   www2  www3
+    INTERNET
+        |
+        |
+    PUBLIC_IP:80 (nginx)
+    /   |   \
+   /    |    \
+app1   app2  app3
 ```
 
-Nginx-vhost is a very thin wrapper around nginx and /etc/nginx/conf.d/*.conf vhost files.
+It works by managing /etc/nginx/conf.d/*.conf vhost files and sudo restart permissions.
 
 ## example
 
-This example will setup 2 websites - one with a static folder and the other load-balanced to 2 different backend servers.
+This example will setup 2 websites.
+
+The first has a static folder and the other is load-balanced to 2 different backend servers.
 
 ```bash
 #!/usr/bin/env bash
@@ -44,14 +44,14 @@ nginx-vhost apply
 $ wget -qO- https://raw.github.com/binocarlos/nginx-proxy/master/bootstrap.sh | sudo bash
 ```
 
-As part of your installation script (as root) - you can use the 'adduser' command.
+As part of your installation script - you can use the 'adduser' command.
 
 ```
 admin@localhost$ sudo nginx-vhost adduser myuser
 ```
 
 myuser is now able to call 'nginx-vhost apply' and 'nginx-vhost reload' - the group permissions are allocated
-so that myuser can call 'sudo /etc/init.d/nginx reload'
+so that myuser can restart nginx.
 
 ## usage
 
@@ -63,7 +63,7 @@ use this command in your installation script to allow the given username use the
 $ sudo nginx-vhost useradd git
 ```
 
-this command must be run as root
+this command should be run once and as root
 
 ### domains <id> <domains>
 
