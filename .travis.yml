@@ -1,0 +1,7 @@
+language: bash
+before_script: 
+  - sudo make install
+  - sudo useradd -d /home/vhost-test -s /bin/bash vhost-test
+  - sudo nginx-vhost useradd vhost-test
+script: sudo -u vhost-test make test
+after_script:

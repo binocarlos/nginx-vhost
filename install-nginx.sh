@@ -15,7 +15,7 @@ if ! grep -q nginx-vhost-reload "/etc/sudoers"; then
   rm /tmp/sudoers.new
 fi
 
-echo "include $VHOST_ROOT/conf/*;" > /etc/nginx/conf.d/nginxvhost.conf
+echo "include $VHOST_ROOT/conf/*.conf;" > /etc/nginx/conf.d/nginxvhost.conf
 
 sed -i 's/# server_names_hash_bucket_size/server_names_hash_bucket_size/' /etc/nginx/nginx.conf
 

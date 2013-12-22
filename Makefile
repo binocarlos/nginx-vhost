@@ -17,9 +17,14 @@ folders:
 	mkdir -p ${VHOST_ROOT}/db
 	chown -R nginxvhost:nginxvhost ${VHOST_ROOT}
 	chmod -R g+w ${VHOST_ROOT}
+	chmod -R g+w ${VHOST_ROOT}/conf
+	chmod -R g+w ${VHOST_ROOT}/db
 
 copyfiles:	
 	cp nginx-vhost /usr/local/bin/nginx-vhost
 
 nginx:	
-	./install
+	./install-nginx.sh
+
+test:
+	./test.sh

@@ -13,7 +13,7 @@ server {
   listen      80;
   server_name $DOMAINS;
   location    / {
-    alias $DOCUMENT_ROOT;
+    root $DOCUMENT_ROOT;
   }
 }
 EOF
@@ -54,7 +54,7 @@ EOF
 
 case "$1" in
 
-  adduser)
+  useradd)
     USER="$2";
     if [ "$(id -u)" != "0" ]; then
        echo "This script must be run as root" 1>&2
@@ -106,15 +106,15 @@ case "$1" in
         APP_ROOT=$i
 
         if [ -e "$APP_ROOT/domains" ]; then
-          DOMAINS=$(cat $APP_ROOT/domains | tr -d \n)
+          DOMAINS=$(cat $APP_ROOT/domains)
         fi
 
         if [ -e "$APP_ROOT/backends" ]; then
-          BACKENDS=$(cat $APP_ROOT/backends | tr -d \n)
+          BACKENDS=$(cat $APP_ROOT/backends)
         fi
 
         if [ -e "$APP_ROOT/document_root" ]; then
-          DOCUMENT_ROOT=$(cat $APP_ROOT/document_root | tr -d \n)
+          DOCUMENT_ROOT=$(cat $APP_ROOT/document_root)
         fi
 
         if [ -z $DOCUMENT_ROOT ]; then
@@ -124,7 +124,11 @@ case "$1" in
         fi
       fi
     done
-    /etc/init.d/nginx reload
+    nginx-vhost reload
+    ;;
+
+    reload)
+    sudo /etc/init.d/nginx reload
     ;;
 
   help)
