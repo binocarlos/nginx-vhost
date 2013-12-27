@@ -41,7 +41,7 @@ nginx-vhost apply
 ## installation
 
 ```
-$ wget -qO- https://raw.github.com/binocarlos/nginx-proxy/master/bootstrap.sh | sudo bash
+$ wget -qO- https://raw.github.com/binocarlos/nginx-vhost/master/bootstrap.sh | sudo bash
 ```
 
 As part of your installation script - you can use the 'adduser' command.
