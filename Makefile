@@ -11,7 +11,10 @@ install: dependencies copyfiles folders
 dependencies: nginx
 
 folders:
-	useradd -b ${VHOST_ROOT} -s /bin/bash -U nginxvhost || true
+	if test -d ${VHOST_ROOT}; \
+	then echo "exists"; \
+	else useradd -b ${VHOST_ROOT} -s /bin/bash -U nginxvhost && echo "created user"; \
+	fi
 	mkdir -p ${VHOST_ROOT}
 	mkdir -p ${VHOST_ROOT}/conf
 	mkdir -p ${VHOST_ROOT}/db
