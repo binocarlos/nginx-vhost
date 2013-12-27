@@ -11,7 +11,7 @@ install: dependencies copyfiles folders
 dependencies: nginx
 
 folders:
-	useradd -b ${VHOST_ROOT} -s /bin/bash -U nginxvhost
+	useradd -b ${VHOST_ROOT} -s /bin/bash -U nginxvhost || true
 	mkdir -p ${VHOST_ROOT}
 	mkdir -p ${VHOST_ROOT}/conf
 	mkdir -p ${VHOST_ROOT}/db
@@ -21,7 +21,7 @@ folders:
 	chmod -R g+w ${VHOST_ROOT}/db
 
 copyfiles:
-	cp nginx-vhost /usr/local/bin/nginx-vhost
+	cp nginx-vhost /usr/local/bin/nginx-vhost || true
 
 nginx:	
 	./install-nginx.sh
