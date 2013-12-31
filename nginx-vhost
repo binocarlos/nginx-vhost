@@ -12,8 +12,10 @@ function static_website(){
 server {
   listen      80;
   server_name $DOMAINS;
-  location    / {
-    root $DOCUMENT_ROOT;
+  root $DOCUMENT_ROOT;
+  index index.html index.htm;
+  location / {
+    
   }
 }
 EOF

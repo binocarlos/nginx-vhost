@@ -12,7 +12,7 @@ A bash script wrapper for nginx that makes it easy load balance HTTP to multiple
     PUBLIC_IP:80 (nginx)
     /   |   \
    /    |    \
-app1   app2  app3
+www1   www2  www3
 ```
 
 It works by managing /etc/nginx/conf.d/*.conf vhost files and sudo restart permissions.
