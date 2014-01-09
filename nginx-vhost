@@ -100,12 +100,22 @@ case "$1" in
     ;;
 
   apply)
-    rm -rf $VHOST_ROOT/conf
-    mkdir -p $VHOST_ROOT/conf
-    for i in $VHOST_ROOT/db/* ; do
-      if [ -d "$i" ]; then
-        APPNAME=$(echo $i | awk -F/ '{print $(NF)}')
-        APP_ROOT=$i
+    website="$2";
+    if [[ -z $website ]]; then
+      rm -rf $VHOST_ROOT/conf
+      mkdir -p $VHOST_ROOT/conf
+      for i in $VHOST_ROOT/db/* ; do
+        if [ -d "$i" ]; then
+          APPNAME=$(echo $i | awk -F/ '{print $(NF)}')
+          nginx-vhost apply $APPNAME
+        fi
+      done
+      nginx-vhost reload
+    else
+      folder=$VHOST_ROOT/db/$website
+      if [ -d "$folder" ]; then
+        APPNAME=$(echo $folder | awk -F/ '{print $(NF)}')
+        APP_ROOT=$folder
 
         if [ -e "$APP_ROOT/domains" ]; then
           DOMAINS=$(cat $APP_ROOT/domains)
@@ -125,8 +135,7 @@ case "$1" in
           static_website $APPNAME "$DOMAINS" $DOCUMENT_ROOT
         fi
       fi
-    done
-    nginx-vhost reload
+    fi
     ;;
 
     reload)
