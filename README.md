@@ -89,6 +89,22 @@ for static websites set the document_root for a given app id
 $ nginx-vhost document_root myapp /srv/projects/myapp/www
 ```
 
+### ssl_cert <id> <cert_location>
+
+set the SSL certificate for the given app
+
+```
+$ nginx-vhost document_root myapp /srv/projects/ssl/myapp/cert.pem
+```
+
+### ssl_key <id> <key_location>
+
+set the SSL key for the given app
+
+```
+$ nginx-vhost document_root myapp /srv/projects/ssl/myapp/key.pem
+```
+
 ### remove <id>
 
 remove a given app id
