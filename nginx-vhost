@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -eo pipefail
 export VHOST_ROOT=${VHOST_ROOT:="/home/nginxvhost"}
 
 # get the config for a website with document root
@@ -7,6 +6,8 @@ function static_website(){
   APPNAME=$1
   DOMAINS=$2
   DOCUMENT_ROOT=$3
+  SSL_CERT=$4
+  SSL_KEY=$5
 
   cat<<EOF > $VHOST_ROOT/conf/$APPNAME.conf
 server {
@@ -14,24 +15,36 @@ server {
   server_name $DOMAINS;
   root $DOCUMENT_ROOT;
   index index.html index.htm;
-  location / {
-    
-  }
 }
 EOF
+
+  if [[ -f $SSL_CERT ]]; then
+    cat<<EOF >> $VHOST_ROOT/conf/$APPNAME.conf
+server {
+  listen      443;
+  server_name $DOMAINS;
+  root $DOCUMENT_ROOT;
+  index index.html index.htm;
+  ssl on;
+  ssl_certificate $SSL_CERT;
+  ssl_certificate_key $SSL_KEY;
+}
+EOF
+  fi
 }
 
 function proxy_website(){
   APPNAME=$1
   DOMAINS=$2
   BACKENDS=$3
+  SSL_CERT=$4
+  SSL_KEY=$5
 
   BACKEND_LIST=""
 
   for BACKEND in $BACKENDS
   do
-    BACKEND_LIST+=" server $BACKEND;
-"
+    BACKEND_LIST+=" server $BACKEND;"
   done
 
   cat<<EOF > $VHOST_ROOT/conf/$APPNAME.conf
@@ -52,6 +65,27 @@ server {
   }
 }
 EOF
+
+
+  if [[ -f $SSL_CERT ]]; then
+    cat<<EOF >> $VHOST_ROOT/conf/$APPNAME.conf
+server {
+  listen      443;
+  server_name $DOMAINS;
+  ssl on;
+  ssl_certificate $SSL_CERT;
+  ssl_certificate_key $SSL_KEY;
+  location    / {
+    proxy_pass  http://$APPNAME;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host \$http_host;
+    proxy_set_header X-Forwarded-For \$remote_addr;
+  }
+}
+EOF
+  fi
 }
 
 case "$1" in
@@ -94,6 +128,20 @@ case "$1" in
     echo $DOCUMENT_ROOT > $VHOST_ROOT/db/$APP/document_root
     ;;
 
+  ssl_cert)
+    APP=$2
+    CERT=$3
+    mkdir -p $VHOST_ROOT/db/$APP
+    echo $CERT > $VHOST_ROOT/db/$APP/ssl_cert
+    ;;
+
+  ssl_key)
+    APP=$2
+    KEY=$3
+    mkdir -p $VHOST_ROOT/db/$APP
+    echo $KEY > $VHOST_ROOT/db/$APP/ssl_key
+    ;;
+
   remove)
     APP=$2
     rm -rf $VHOST_ROOT/db/$APP
@@ -110,12 +158,22 @@ case "$1" in
           nginx-vhost apply $APPNAME
         fi
       done
+
+      echo "after configs"
+      sleep 2
+      echo "reloading nginx"
       nginx-vhost reload
+      echo "reloaded"
     else
       folder=$VHOST_ROOT/db/$website
       if [ -d "$folder" ]; then
         APPNAME=$(echo $folder | awk -F/ '{print $(NF)}')
         APP_ROOT=$folder
+        DOMAINS=""
+        BACKENDS=""
+        DOCUMENT_ROOT=""
+        SSL_CERT=""
+        SSL_KEY=""
 
         if [ -e "$APP_ROOT/domains" ]; then
           DOMAINS=$(cat $APP_ROOT/domains)
@@ -129,10 +187,18 @@ case "$1" in
           DOCUMENT_ROOT=$(cat $APP_ROOT/document_root)
         fi
 
+        if [ -e "$APP_ROOT/ssl_cert" ]; then
+          SSL_CERT=$(cat $APP_ROOT/ssl_cert)
+        fi
+
+        if [ -e "$APP_ROOT/ssl_key" ]; then
+          SSL_KEY=$(cat $APP_ROOT/ssl_key)
+        fi
+
         if [ -z $DOCUMENT_ROOT ]; then
-          proxy_website $APPNAME "$DOMAINS" "$BACKENDS"
+          proxy_website $APPNAME "$DOMAINS" "$BACKENDS" $SSL_CERT $SSL_KEY
         else
-          static_website $APPNAME "$DOMAINS" $DOCUMENT_ROOT
+          static_website $APPNAME "$DOMAINS" $DOCUMENT_ROOT $SSL_CERT $SSL_KEY
         fi
       fi
     fi
@@ -147,6 +213,8 @@ case "$1" in
     help            Print the list of commands
     adduser         Add a given user to nginx-vhost sudoers
     domains         Set the domains for an app
+    ssl_cert        Set the ssl cert for an app
+    ssl_key         Set the ssl key for an app
     backends        Set the backends for an app
     document_root   Set the document_root for a static app
     remove          Remove an app
