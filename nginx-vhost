@@ -159,7 +159,6 @@ case "$1" in
         fi
       done
 
-      echo "after configs"
       sleep 2
       echo "reloading nginx"
       nginx-vhost reload
