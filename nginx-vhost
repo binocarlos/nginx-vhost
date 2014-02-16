@@ -9,25 +9,28 @@ function static_website(){
   SSL_CERT=$4
   SSL_KEY=$5
 
-  cat<<EOF > $VHOST_ROOT/conf/$APPNAME.conf
-server {
-  listen      80;
-  server_name $DOMAINS;
-  root $DOCUMENT_ROOT;
-  index index.html index.htm;
-}
-EOF
+
 
   if [[ -f $SSL_CERT ]]; then
-    cat<<EOF >> $VHOST_ROOT/conf/$APPNAME.conf
+    cat<<EOF > $VHOST_ROOT/conf/$APPNAME.conf
 server {
-  listen      443;
+  listen 80;
+  listen      443 ssl;
   server_name $DOMAINS;
   root $DOCUMENT_ROOT;
   index index.html index.htm;
   ssl on;
   ssl_certificate $SSL_CERT;
   ssl_certificate_key $SSL_KEY;
+}
+EOF
+  else
+    cat<<EOF > $VHOST_ROOT/conf/$APPNAME.conf
+server {
+  listen      80;
+  server_name $DOMAINS;
+  root $DOCUMENT_ROOT;
+  index index.html index.htm;
 }
 EOF
   fi
@@ -47,14 +50,19 @@ function proxy_website(){
     BACKEND_LIST+=" server $BACKEND;"
   done
 
-  cat<<EOF > $VHOST_ROOT/conf/$APPNAME.conf
+  if [[ -f $SSL_CERT ]]; then
+    cat<<EOF > $VHOST_ROOT/conf/$APPNAME.conf
 upstream $APPNAME { 
 $BACKEND_LIST
 }
-
+    
 server {
+  listen      443 ssl;
   listen      80;
   server_name $DOMAINS;
+  ssl on;
+  ssl_certificate $SSL_CERT;
+  ssl_certificate_key $SSL_KEY;
   location    / {
     proxy_pass  http://$APPNAME;
     proxy_http_version 1.1;
@@ -65,16 +73,15 @@ server {
   }
 }
 EOF
+  else
+    cat<<EOF > $VHOST_ROOT/conf/$APPNAME.conf
+upstream $APPNAME { 
+$BACKEND_LIST
+}
 
-
-  if [[ -f $SSL_CERT ]]; then
-    cat<<EOF >> $VHOST_ROOT/conf/$APPNAME.conf
 server {
-  listen      443;
+  listen      80;
   server_name $DOMAINS;
-  ssl on;
-  ssl_certificate $SSL_CERT;
-  ssl_certificate_key $SSL_KEY;
   location    / {
     proxy_pass  http://$APPNAME;
     proxy_http_version 1.1;
